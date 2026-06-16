@@ -1,10 +1,9 @@
 # ── Stage 1: deps ────────────────────────────────────────────────────────────
-# Use the official Puppeteer image as base — it ships with a compatible
-# Chromium build and all required system libraries pre-installed.
+# node:20-slim does NOT ship Chromium — we install it explicitly via apt below.
 # Pinned to Node 20 LTS for stability.
 FROM node:20-slim AS deps
 
-# Puppeteer needs these system packages to run Chromium headlessly.
+# chromium         → the actual browser binary Puppeteer will drive
 # ca-certificates  → HTTPS connections from pages
 # fonts-liberation → common Latin font family (prevents missing-glyph boxes)
 # libnss3 etc      → Chromium's network security stack
@@ -12,6 +11,7 @@ FROM node:20-slim AS deps
 # libgbm1          → GPU buffer manager (needed even in headless mode)
 # libasound2       → ALSA audio (Chromium links it; harmless if no audio)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
     ca-certificates \
     fonts-liberation \
     libasound2 \
@@ -63,6 +63,7 @@ FROM node:20-slim AS runtime
 
 # Re-install system deps in the final stage (multi-stage means we start fresh).
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium \
     ca-certificates \
     fonts-liberation \
     libasound2 \
@@ -101,6 +102,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Diagnostic: confirm exactly where chromium landed and that it's executable.
+# Check Render's build logs for this output if launch issues persist.
+RUN which chromium || which chromium-browser || echo "WARNING: chromium binary not found on PATH"
+RUN chromium --version || echo "WARNING: chromium --version failed to run"
 
 # Copy node_modules from the deps stage — no npm install needed here.
 COPY --from=deps /app/node_modules ./node_modules
