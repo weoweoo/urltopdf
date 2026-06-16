@@ -22,7 +22,7 @@ const convertLimiter = rateLimit({
 
   // Custom handler so we return JSON (not HTML) and log the event
   handler: (req, res, next, options) => {
-    logger.warn({ ip: req.ip, path: req.path }, 'Rate limit exceeded');
+    console.warn(`Rate limit exceeded — IP: ${req.ip}, path: ${req.path}`);
     res.status(429).json({
       error: 'Too many requests. Please slow down.',
       retryAfter: Math.ceil(options.windowMs / 1000),
@@ -43,6 +43,10 @@ function isValidUrl(string) {
 
 app.get('/',(req, res) => {
     res.json({ status: 'ok', message: 'URL to PDF app running'});
+});
+
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', message: 'URL to PDF API running' });
 });
 
 app.post('/api/convert', convertLimiter, async (req, res) => {
