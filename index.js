@@ -11,6 +11,7 @@ app.use(cors({
   origin: 'https://habsa.vercel.app', // lock to your actual domain
   methods: ['POST', 'GET'],
 }));
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 const convertLimiter = rateLimit({
