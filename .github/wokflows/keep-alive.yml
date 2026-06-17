@@ -1,0 +1,23 @@
+name: Keep Render warm
+
+on:
+  schedule:
+    # Runs every 10 minutes. GitHub Actions cron can lag a few minutes
+    # under load, which is fine here — we just need traffic frequently
+    # enough that Render's 15-minute inactivity sleep never triggers.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:   # lets you manually trigger a ping from the Actions tab for testing
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        env:
+          RENDER_URL: ${{ secrets.RENDER_URL }}
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$RENDER_URL/health")
+          echo "Health check responded with status: $response"
+          if [ "$response" -ne 200 ]; then
+            echo "::warning::Health check did not return 200 (got $response)"
+          fi
