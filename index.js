@@ -8,7 +8,7 @@ import cors from 'cors';
 
 const app = express();
 app.use(cors({
-  origin: 'https://habsa.vercel.app', // lock to your actual domain
+  origin: ['https://habsa.vercel.app', 'http://localhost:3000', 'http://localhost:3001'],
   methods: ['POST', 'GET'],
 }));
 app.set('trust proxy', 1);
